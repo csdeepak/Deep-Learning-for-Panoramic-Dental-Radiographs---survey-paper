@@ -15,15 +15,19 @@ env/
 
 # Dataset — never commit raw data
 data/
-*.jpg
-*.jpeg
-*.png
-*.JPG
-*.JPEG
-*.PNG
-*.bmp
-*.tif
-*.tiff
+datasets/
+raw_data/
+
+# Keep repository assets tracked; ignore only dataset image dumps
+**/data/**/*.jpg
+**/data/**/*.jpeg
+**/data/**/*.png
+**/data/**/*.JPG
+**/data/**/*.JPEG
+**/data/**/*.PNG
+**/data/**/*.bmp
+**/data/**/*.tif
+**/data/**/*.tiff
 
 # Model weights — large files, use Git LFS or DVC
 results/checkpoints/*.pth

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "Deep Learning for Panoramic Dental Radiographs"
+message: "If you use this repository, please cite it using the metadata below."
+type: dataset
+authors:
+  - family-names: "Deepak"
+    given-names: "C S"
+  - family-names: "Gunadeep"
+    given-names: "Chennupati"
+  - family-names: "Archana"
+  - family-names: "Srujan"
+    given-names: "AVSN Sai"
+repository-code: "https://github.com/csdeepak/Deep-Learning-for-Panoramic-Dental-Radiographs---survey-paper"
+license: "MIT"
+version: "1.0.0"
+date-released: "2026-04-06"
+keywords:
+  - dental ai
+  - panoramic radiograph
+  - deep learning
+  - caries detection
+  - periodontal bone loss
+  - explainable ai
