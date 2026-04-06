@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.so
+.env
+venv/
+env/
+
+# Dataset — never commit raw data
+data/
+*.jpg
+*.jpeg
+*.png
+*.JPG
+*.JPEG
+*.PNG
+*.bmp
+*.tif
+*.tiff
+
+# Model weights — large files, use Git LFS or DVC
+results/checkpoints/*.pth
+results/checkpoints/*.pt
+results/checkpoints/*.pkl
+*.pth
+*.pt
+*.pkl
+*.h5
+*.hdf5
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Colab
+*.ipynb_meta
+
+# Logs
+*.log
+runs/
+wandb/
+mlruns/
+
+# Output figures (regenerable)
+results/figures/*.png
+results/figures/*.pdf
+
+# Temp
+tmp/
+temp/
+*.tmp

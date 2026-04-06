@@ -1,0 +1,1479 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{eurosym}
+\usepackage{textcomp}
+\usepackage{hyperref}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+    
+% ===================== ADDED THIS =====================
+
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsectiondis}{\thesubsection}
+
+% =====================================================
+
+\begin{document}
+
+\title{Deep Learning for Panoramic Dental Radiographs: A Comprehensive
+Survey on Caries Detection, Periodontal Bone Loss Assessment and
+Explainable AI%
+
+}
+
+\author{
+\IEEEauthorblockN{C S Deepak}
+\IEEEauthorblockA{\textit{Dept.\ of Computer Science}\\
+\textit{PES University -- RR Campus}\\
+Bangalore, India}
+\and
+\IEEEauthorblockN{Chennupati Gunadeep}
+\IEEEauthorblockA{\textit{Dept.\ of Computer Science}\\
+\textit{PES University -- RR Campus}\\
+Bangalore, India}
+\and
+\IEEEauthorblockN{Archana}
+\IEEEauthorblockA{\textit{Dept.\ of Computer Science}\\
+\textit{PES University -- RR Campus}\\
+Bangalore, India}
+\and
+\IEEEauthorblockN{AVSN Sai Srujan}
+\IEEEauthorblockA{\textit{Dept.\ of Computer Science}\\
+\textit{PES University -- RR Campus}\\
+Bangalore, India}
+\and
+\IEEEauthorblockN{\centering Under the guidance of Dr.\ Mamatha H R, Director, Bajaj Engineering Skills Training @PESU, Bangalore, India}
+}
+\maketitle
+
+% -----------------------------------------------------------------------
+\begin{abstract}
+Dental panoramic radiographs (OPGs) are widely used for diagnosing
+dental caries and periodontal disease, yet manual interpretation remains
+time-consuming and prone to inter-examiner variability. Despite rapid
+advances in deep learning, existing research remains fragmented, with
+most studies addressing isolated tasks and lacking clinically integrated
+solutions.
+
+This paper presents a comprehensive survey of deep learning methods for
+panoramic dental radiograph analysis, covering caries detection, severity
+staging, periodontal bone loss assessment, tooth segmentation, and
+explainable AI. A total of 47 studies published between 2021 and 2026
+are systematically analyzed across architectures including CNNs,
+YOLO-based detectors, U-Net variants, and transformer-based models. This
+paper formally defines a unified multi-task dental AI framework
+integrating detection, localization, severity staging, quantification,
+and explainability within a single system.
+
+Our analysis shows that while individual tasks achieve high performance,
+no existing approach provides a complete, clinically usable pipeline.
+Five key gaps are identified, including task fragmentation, absence of
+severity staging, limited explainability adoption, dataset bias, and
+weak clinical integration.
+
+This work establishes a structured foundation for developing
+next-generation, clinically deployable dental AI systems.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Deep Learning, Dental Caries, Periodontal Disease, Panoramic
+Radiographs, Tooth Segmentation and Detection, Multi-Task Learning,
+Explainable AI
+\end{IEEEkeywords}
+
+% -----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+
+Dental panoramic radiography, also known as OrthoPantomography (OPG),
+is the standard imaging tool in routine dental practice. A single
+panoramic exposure captures the full dentition, surrounding alveolar
+bone, and anatomical landmarks in one image, making it the primary
+modality for detecting dental caries, periodontal bone loss, impacted
+teeth, and other oral pathologies. Despite this clinical centrality,
+accurate interpretation of panoramic radiographs demands substantial
+expertise and is inherently subject to inter-examiner variability,
+particularly among early-stage practitioners such as dental students
+and interns, who represent the population most vulnerable to diagnostic
+error.
+
+Dental caries, defined as the progressive bacterial demineralization of
+tooth enamel and dentine, affects approximately 2.3 billion people
+globally and is the most prevalent non-communicable disease worldwide
+\cite{luke2025accuracy}. Periodontal disease, characterized by
+irreversible alveolar bone loss around the teeth, affects over 19\% of
+the adult global population and is the leading cause of adult tooth
+loss \cite{khubrani2025detection}. Both conditions share a critical
+clinical property: their early radiographic signs are subtle, easily
+missed, and disproportionately consequential when detection is delayed.
+A faint radiolucency at the proximal surface of a premolar, or a
+1--2\,mm reduction in alveolar bone height, can be clinically decisive
+yet visually ambiguous even for trained examiners.
+
+Over the past five years, deep learning has enabled significant advances
+in automated dental radiograph analysis. Convolutional neural networks
+(CNNs), YOLO-based object detectors, U-Net segmentation architectures,
+and transformer-based models have demonstrated strong performance across
+individual diagnostic tasks such as caries detection, tooth
+segmentation, and periodontal bone loss estimation
+\cite{nassiri2025yolo,jundaeng2025advanced,bhoopalan2026self}.
+
+However, despite these advances, current research remains fundamentally
+fragmented at the system level. Existing approaches predominantly focus
+on isolated tasks or single-disease objectives, without integrating
+these components into a unified diagnostic workflow required in clinical
+practice. This reflects a deeper structural limitation: current models
+are optimized for task-specific performance rather than holistic
+diagnostic reasoning \cite{zanini2024systematic,muresanu2024automating}.
+
+The challenge of automated dental radiograph analysis is inherently
+multi-dimensional. A clinically viable system must simultaneously
+address multi-instance detection across all teeth, identification of
+low-contrast early-stage lesions, precise spatial measurement of
+anatomical landmarks such as the cemento-enamel junction (CEJ) and
+alveolar bone crest, and the coexistence of multiple diseases within a
+single panoramic image. This multi-stage diagnostic process can be
+conceptualized as a pipeline, as illustrated in Fig.~\ref{fig:pipeline}.
+
+\begin{figure*}[tp]
+    \centering
+    \includegraphics[width=\textwidth]{fig1.jpeg}
+    \caption{System Pipeline of Proposed AI Model.}
+    \label{fig:pipeline}
+\end{figure*}
+
+Furthermore, the lack of standardized datasets and evaluation protocols
+limits reproducibility and cross-study comparability. A significant
+proportion of studies rely on private, single-center datasets, leading
+to dataset bias and poor generalization to external clinical
+environments \cite{muresanu2024automating,delamare2024panoramic}. In
+addition, explainable artificial intelligence (XAI) remains severely
+underutilized, despite its critical role in clinical trust,
+interpretability, and regulatory acceptance
+\cite{ferrara2025applications,bilal2024pdcnet}. The absence of
+explainability, combined with inconsistent validation practices, creates
+a substantial barrier to real-world deployment.
+
+Unlike prior surveys that focus on individual tasks or model
+architectures, this work adopts a system-level perspective, analyzing
+how disparate components can be integrated into a unified diagnostic
+framework \cite{zhou2025deep,albano2024artificial}.
+
+This survey reviews 47 research papers published between 2021 and 2026,
+providing a comprehensive synthesis of deep learning methods applied to
+dental radiograph analysis. The literature is organized into six
+functional categories: caries detection and severity classification,
+periodontal disease and bone loss analysis, multi-task end-to-end
+diagnosis, explainable AI, dataset benchmarking and clinical validation,
+and tooth segmentation and numbering. The central finding of this survey
+is that no existing system simultaneously addresses caries detection,
+severity staging, periodontal bone loss quantification, and
+explainability within a single unified framework for panoramic
+radiographs.
+
+The main contributions of this survey are as follows:
+\begin{itemize}
+    \item A task-level taxonomy of deep learning systems for panoramic
+          dental radiograph analysis, covering detection, segmentation,
+          classification, and multi-task architectures.
+    \item A formal problem formulation for unified multi-disease dental
+          diagnosis, highlighting the integration requirements of
+          detection, severity staging, quantification, and
+          explainability.
+    \item A cross-category comparative analysis of 47 studies,
+          identifying inconsistencies in datasets, evaluation metrics,
+          and validation protocols.
+    \item A quantified gap analysis revealing key limitations in current
+          research, including single-disease model focus, absence of
+          automated severity staging, dataset fragmentation, and low
+          adoption of explainable AI.
+    \item A research roadmap toward clinically deployable, explainable,
+          multi-task dental AI systems.
+\end{itemize}
+
+This survey establishes unified, explainable, multi-task dental AI as
+the critical next step toward clinically deployable diagnostic systems,
+particularly for supporting junior clinicians and dental students in
+real-world practice.
+
+
+
+
+% -----------------------------------------------------------------------
+\section{Search Methodology}
+\label{sec:methodology}
+
+This survey used a structured keyword search across five digital
+libraries: IEEE Xplore, PubMed/MEDLINE, Scopus, Google Scholar, and
+SpringerLink. The search was executed between January 2024 and March
+2025, with publication year filters restricting results to 2020 onward.
+
+\subsection{Search Strategy}
+
+Search queries were organized into five thematic clusters:
+
+\begin{itemize}
+  \item \textit{Caries detection on panoramic radiographs:}
+        ``dental caries'' panoramic radiograph deep learning; ``caries
+        detection'' panoramic radiograph CNN; ``caries segmentation''
+        orthopantomogram neural network.
+
+  \item \textit{Periodontal disease and bone loss:} ``periodontal
+        disease'' panoramic radiograph deep learning; ``alveolar bone
+        loss'' orthopantomogram AI; ``CEJ'' ``bone crest'' panoramic
+        radiograph segmentation.
+
+  \item \textit{Multi-disease and end-to-end OPG systems:}
+        ``multi-task'' dental panoramic radiograph deep learning;
+        ``dental disease detection'' panoramic radiograph end-to-end.
+
+  \item \textit{Explainable AI in dental imaging:} ``explainable AI''
+        dental radiograph; ``Grad-CAM'' dental panoramic;
+        ``interpretable deep learning'' dental imaging.
+
+  \item \textit{Dataset and clinical validation:} ``dental panoramic
+        radiograph dataset'' deep learning; ``OPG benchmark'' AI;
+        ``clinical validation'' dental AI panoramic.
+\end{itemize}
+
+\subsection{Inclusion and Exclusion Criteria}
+
+Papers were included if they: (i)~applied deep learning or machine
+learning to dental radiograph analysis; (ii)~used panoramic, bitewing,
+or periapical radiographs as primary input; (iii)~targeted detection,
+segmentation, classification, or staging of dental caries, periodontal
+disease, or related pathologies; and (iv)~reported quantitative
+performance metrics. Papers were excluded if they focused exclusively on
+CBCT/3D imaging, addressed only non-dental imaging, or did not report
+reproducible quantitative results. Clinical reviews without AI models
+were included only when they provided foundational clinical definitions
+directly relevant to the survey scope.
+
+\subsection{Final Corpus}
+
+After applying the criteria, 47~papers were selected, spanning 2021--2026,
+with 25~papers from 2025 (53\%), 17~from 2024 (36\%), 2~from 2026,
+2~from 2023, and 1~from 2021 -- reflecting the field's rapid recent
+growth. Publication venues include BMC Oral Health (8~papers), IEEE (8),
+MDPI journals (9), Elsevier (4), Springer (3), and Scientific
+Reports/Nature Portfolio (3).
+
+% -----------------------------------------------------------------------
+\section{System-Level Taxonomy and Problem Formulation}
+\label{sec:taxonomy}
+
+\subsection{Formal Problem Definition}
+
+Panoramic dental radiograph analysis is inherently a multi-component
+diagnostic problem that cannot be reduced to single-task prediction.
+In clinical practice, meaningful diagnosis requires coordinated
+execution of multiple interdependent processes: anatomical localization
+of teeth, identification of pathological conditions, assessment of
+disease severity, and quantitative measurement of clinically relevant
+parameters. Most existing deep learning systems in the reviewed
+literature address only one component in isolation
+\cite{albano2024artificial,luke2025accuracy,zanini2024systematic},
+producing outputs that are diagnostically incomplete and clinically
+difficult to integrate.
+
+A unified dental AI system maps an input OPG to structured diagnostic
+outputs through six core functional components: detection, localization,
+severity staging, quantification, explainability, and clinical
+integration. To the best of our knowledge, no reviewed study in the
+corpus of 47 papers fully addresses all six components simultaneously
+on panoramic radiographs, representing the primary architectural gap
+motivating this survey.
+
+These six core components are defined as follows:
+
+\begin{itemize}
+    \item \textbf{Detection:} Identification of pathological conditions
+          from radiographic features (carious lesions, periodontal bone
+          loss, periapical pathology, impacted teeth). YOLO-family
+          architectures dominate this task
+          \cite{ayhan2025detection,nassiri2025yolo,chen2024cariesxrays,
+          bizjak2024advancing,pornprasertsuk2025clinical}.
+
+    \item \textbf{Localization:} Spatial identification of affected
+          teeth through bounding boxes or polygon segmentation.
+          Tooth-level localization using FDI numbering is present in
+          pipeline systems
+          \cite{jundaeng2025advanced,chen2024cariesxrays,bizjak2024advancing,
+          pornprasertsuk2025clinical} but absent in
+          classification-only approaches
+          \cite{kaushik2025densenet201,mathur2025comparative,ozdemir2026enhanced}.
+
+    \item \textbf{Severity Staging:} Classification of disease
+          progression along clinically meaningful scales. For caries:
+          enamel, dentine, pulp involvement
+          \cite{asadi2024detection,bizjak2024advancing}. For
+          periodontal disease: Stages I--IV per 2018 AAP/EFP
+          classification \cite{chmielewski20252018}. This is the most
+          critically underaddressed component, with only two C1 papers
+          providing caries severity differentiation
+          \cite{bizjak2024advancing,asadi2024detection}.
+
+    \item \textbf{Quantification:} Measurement of the CEJ--alveolar
+          bone crest distance and percentage bone loss. Only three
+          studies address this: Jundaeng et al.\ achieved
+          mAP50\,=\,0.995 \cite{jundaeng2025advanced}; Wimalasiri et
+          al.\ reported ICC\,=\,0.80 \cite{wimalasiri2025ai}; and Tian
+          et al.\ achieved ICC\,=\,0.83 \cite{tian2025development}.
+
+    \item \textbf{Explainability:} Generation of interpretable visual
+          outputs for clinical verification. Only 3 of 47 papers
+          implement explainability (6.4\%): Chen et al.\
+          \cite{chen2023deep} and Bilal et al.\ \cite{bilal2024pdcnet}
+          use Grad-CAM, and Chen et al.\ \cite{chen2024cariesxrays}
+          show feature map attention.
+
+    \item \textbf{Clinical Integration:} Alignment with diagnostic
+          workflows, reporting standards, and regulatory requirements.
+          Only Schwendicke et al.\ \cite{schwendicke2021cost} model
+          economic impact, and only Lee et al.\ \cite{lee2025evaluation}
+          measure clinician acceptance through a 65-dentist usability
+          survey.
+\end{itemize}
+
+This six-component formulation stands in direct contrast to existing
+approaches that address each task in isolation -- a fragmentation
+independently identified as critical by multiple systematic reviews
+\cite{iacob2025automated,albano2024artificial,bonfanti2025deep,
+khubrani2025detection,zanini2024systematic,zhou2025deep}.
+
+\subsection{System Taxonomy}
+
+Existing approaches can be categorized into four distinct system
+archetypes based on task integration and diagnostic scope. This taxonomy
+reveals both progression toward integration and persistent limitations
+preventing full clinical utility. Table~\ref{tab:taxonomy} summarizes
+capability coverage across taxonomy dimensions.
+
+\subsubsection{Single-Task Approaches}
+
+Single-task systems address one diagnostic objective in isolation --
+caries detection, tooth segmentation, or periodontal classification --
+without integration. This accounts for the majority of reviewed studies
+(18 C1, 15 C2 papers). While several achieve high performance --
+CariesXrays FPCL reaching AP50\,=\,84.1\% \cite{chen2024cariesxrays},
+Attention U-Net achieving Recall\,=\,0.96
+\cite{pornprasertsuk2025clinical}, U-Net variants reporting
+Dice\,=\,96.77\% \cite{vickram2025extraction} -- none produce severity
+grading, periodontal assessment, or clinical explanations. The
+fundamental limitation is not performance but scope: optimizing one
+component without modeling interdependence with other diagnostic tasks
+produces clinically incomplete systems. Systematic reviews confirm this
+\cite{albano2024artificial,zanini2024systematic}, identifying absence
+of multi-task integration as the primary barrier to clinical
+translation.
+
+\subsubsection{Multi-Task Approaches}
+
+Seven reviewed papers adopt multi-task designs with varying
+completeness. Chen et al.\ \cite{chen2023deep} is the most clinically
+complete, classifying both periodontitis and caries on a per-tooth
+basis using EfficientNet-B0 with YOLOv7 localization (ROC
+AUC\,=\,98.67\% for periodontitis, 98.31\% for caries) with Grad-CAM
+explainability. However, this system operates exclusively on periapical
+radiographs -- not panoramic OPGs -- limiting direct applicability.
+Multi-task approaches expose a critical performance asymmetry:
+structural tasks (segmentation, enumeration) consistently achieve
+near-ceiling performance, while pathological tasks (disease detection,
+severity staging) remain substantially harder. Mure\c{s}anu et al.\
+\cite{muresanu2024automating} quantified the real-world cost: YOLOv8
+F1 dropped from 0.60 (internal) to 0.47 (external) -- a 22\%
+degradation from single-center training.
+
+\subsubsection{Pipeline-Based Approaches}
+
+Pipeline systems decompose diagnosis into sequential stages, reflecting
+the staged clinical reasoning dentists employ. Jundaeng et al.\
+\cite{jundaeng2025advanced} implemented a precise periodontal pipeline:
+YOLOv8 Stage~1 for tooth segmentation (mAP50\,=\,0.92) feeds Stage~2
+for CEJ and bone crest detection (mAP50\,=\,0.995,
+Sensitivity\,=\,1.0). Pornprasertsuk-Damrongsri et al.\
+\cite{pornprasertsuk2025clinical} combined YOLOv5s for tooth detection
+with Attention U-Net for caries segmentation (Recall\,=\,0.96,
+F1\,=\,0.85). The inherent limitation is error propagation:
+inaccuracies in early stages compound through subsequent stages. None
+of the reviewed pipelines address severity staging, and explainability
+appears in only one system \cite{chen2023deep} -- operating on
+periapical, not panoramic, radiographs.
+
+\subsubsection{End-to-End Approaches}
+
+End-to-end models directly map radiographs to diagnostic outputs using
+deep architectures -- primarily transformers. Bhoopalan et al.\
+\cite{bhoopalan2026self} applied Vision Transformer and Swin Transformer
+to 5,098 OPGs, achieving ViT accuracy\,=\,96\% without spatial
+localization or severity grading. Van Nistelrooij et al.\
+\cite{vannistelrooij2024combining} combined Mask DINO with Swin-B
+Transformer, achieving tooth-level assessment performance
+(FROC\,=\,0.988) but with 40-second inference time unsuitable for
+clinical use. The fundamental barrier is data: the field lacks
+large-scale, multi-disease, multi-center public datasets required for
+end-to-end learning.
+
+The system-level taxonomy and capability gaps across different architectural paradigms are illustrated in Fig.~\ref{fig:taxonomy}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.85\textwidth]{fig4.jpeg}
+  \caption{System-level taxonomy of dental AI approaches for panoramic radiographs, 
+  illustrating four architectural paradigms (Single-Task, Multi-Task, Pipeline-Based, 
+  and End-to-End Systems) and their respective capability coverage across detection, 
+  localization, severity, quantification, and explainability (XAI) dimensions, 
+  alongside the proposed Unified System as a future research direction.}
+  \label{fig:taxonomy}
+\end{figure*}
+
+\begin{table*}[t]
+\renewcommand{\arraystretch}{1.5}
+\caption{System Taxonomy --- Representative Studies by Design Pattern
+and Capability Coverage}
+\label{tab:taxonomy}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{1.6cm} p{3.5cm} p{1.0cm} p{1.2cm} p{1.2cm} p{1.0cm} p{1.0cm} p{1.5cm}}
+\toprule
+\textbf{System Type} & \textbf{Representative Studies} &
+\textbf{Detect} & \textbf{Localize} & \textbf{Severity} &
+\textbf{Quant.} & \textbf{XAI} & \textbf{Multi-Disease} \\
+\midrule
+Single-Task &
+\cite{ayhan2025detection,alharbi2023detection,khuwaja2024ai,
+chen2024cariesxrays,perez2024ai,zancan2025ai,ozdemir2026enhanced}
+& \checkmark & Partial & \texttimes & \texttimes & \texttimes & \texttimes \\
+
+Multi-Task &
+\cite{nassiri2025yolo,chen2023deep,gamal2025automated,
+vannistelrooij2024combining,muresanu2024automating,bhoopalan2026self}
+& \checkmark & \checkmark & \texttimes & \texttimes & Partial & Partial \\
+
+Pipeline-Based &
+\cite{jundaeng2025advanced,chen2024cariesxrays,bizjak2024advancing,
+pornprasertsuk2025clinical}
+& \checkmark & \checkmark & \texttimes & Partial & \texttimes & \texttimes \\
+
+End-to-End &
+\cite{vannistelrooij2024combining,bhoopalan2026self}
+& \checkmark & Partial & \texttimes & \texttimes & \texttimes & Partial \\
+
+\midrule
+\textbf{Unified (Required)} & \textit{None in reviewed corpus}
+& \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\multicolumn{8}{l}{\footnotesize \checkmark\,=\,fully addressed;\
+\texttimes\,=\,not addressed;\ Partial\,=\,partially addressed.}\\
+\multicolumn{8}{l}{\footnotesize Quant.\,=\,quantitative measurement;\
+XAI\,=\,explainable AI outputs.}\\
+\end{tabular}
+\end{table*}
+
+\subsection{Task Hierarchy}
+
+Dental radiograph analysis follows a structured sequence of
+interdependent processing stages reflecting the actual cognitive process
+trained clinicians employ:
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig5.jpeg}
+  \caption{Task hierarchy for panoramic dental radiograph analysis, illustrating 
+  the sequential stages from anatomical structure extraction to clinical report 
+  generation. Early stages such as tooth segmentation and numbering achieve high 
+  performance, while downstream stages including severity assessment, quantification, 
+  and explainability remain underexplored, highlighting key limitations in current 
+  systems.}
+  \label{fig:taskhierarchy}
+\end{figure*}
+
+Early stages focus on anatomical structure identification, where systems
+perform well: tooth segmentation achieves pooled sensitivity\,=\,0.92,
+specificity\,=\,0.94 \cite{bonfanti2025deep}; tooth enumeration reaches
+mAP50\,=\,0.978 \cite{nassiri2025yolo}. Middle stages -- disease
+detection and severity assessment -- represent the performance
+bottleneck. Disease detection on OPG reaches only mAP50\,$\approx$\,0.61
+\cite{nassiri2025yolo}, and severity staging is attempted in only two
+of 18 C1 papers \cite{bizjak2024advancing,asadi2024detection}. Terminal
+stages -- explainability and structured reporting -- are most neglected:
+explainability appears in only 3 of 47 papers (6.4\%)
+\cite{chen2023deep,chen2024cariesxrays,bilal2024pdcnet}, and structured
+report generation is absent from all systems. This hierarchy
+demonstrates that dental AI is fundamentally a sequential reasoning
+problem, where failures in early stages propagate to downstream
+diagnostic decisions. For systems targeting junior clinicians, the
+absence of visual explanations eliminates educational value entirely.
+
+\subsection{System-Level Limitations}
+
+Five system-level limitations persist across the reviewed literature,
+reflecting field-wide methodological choices:
+
+\begin{itemize}
+    \item \textbf{Task Fragmentation:} No panoramic OPG system
+          simultaneously addresses caries detection, severity staging,
+          periodontal quantification, and explainability. Chen et al.\
+          \cite{chen2023deep} achieves dual-disease detection with
+          explainability -- closest to unified -- but only on periapical
+          radiographs.
+
+    \item \textbf{Severity Staging Deficit:} Only Asadi
+          \cite{asadi2024detection} and Bizjak and Robic
+          \cite{bizjak2024advancing} provide caries severity
+          differentiation among 18 C1 papers. For periodontal disease,
+          the 2018 AAP/EFP Stages I--IV \cite{chmielewski20252018} are
+          not addressed by any system.
+
+    \item \textbf{Explainability Absence:} Only 3 of 47 papers
+          implement explainability (6.4\%), contradicting field
+          consensus
+          \cite{nassiri2025yolo,gamal2025automated,sastika2025ai,
+          ferrara2025applications,khubrani2025detection}. The EU AI Act
+          and FDA guidance require transparency for high-risk systems --
+          requirements 43 of 47 systems cannot satisfy.
+
+    \item \textbf{Dataset Fragmentation:} Approximately 60\% of studies
+          use private, single-center datasets causing heterogeneity
+          values $I^2$\,=\,88--96\%
+          \cite{iacob2025automated,albano2024artificial,bonfanti2025deep}.
+          Mure\c{s}anu et al.\ \cite{muresanu2024automating} documented
+          22\% F1 degradation from internal to external data. No
+          large-scale, multi-disease, multi-center, publicly available
+          panoramic dataset with standardized annotations exists.
+
+    \item \textbf{Clinical Workflow Disconnection:} Except for
+          Schwendicke et al.\ \cite{schwendicke2021cost}
+          (cost-effectiveness analysis) and Lee et al.\
+          \cite{lee2025evaluation} (65-dentist usability study), no
+          system evaluates AI within actual clinical workflows. Most
+          produce bounding boxes without structured reports or treatment
+          recommendations.
+\end{itemize}
+%---------------------------
+
+\section{Background}
+\label{sec:background}
+
+\subsection{Panoramic Radiography in Clinical Dentistry}
+
+Orthopantomography (OPG) produces a two-dimensional tomographic
+representation of the curved dental arches on a flat image plane. Unlike
+periapical or bitewing radiographs that show specific regions, a single
+panoramic image captures all 32 permanent teeth, maxilla and mandible,
+and surrounding structures -- making it the most information-dense
+single radiographic acquisition in routine dental practice. For caries
+detection, panoramic radiographs are less sensitive than bitewing for
+early proximal lesions \cite{perez2024ai,bizjak2024advancing,pornprasertsuk2025clinical}.
+For periodontal bone loss assessment, OPG is the standard screening
+tool, enabling visualization of the alveolar crest relative to the
+cemento-enamel junction (CEJ) across all teeth
+\cite{jundaeng2025advanced,iacob2025automated,khubrani2025detection}.
+This modality distinction directly shapes the architectural requirements
+for AI systems addressing each task.
+
+\subsection{Deep Learning Architectures}
+
+The architectures reviewed fall into four functional families. First,
+CNNs with transfer learning -- ResNet~\cite{khuwaja2024ai},
+DenseNet~\cite{kaushik2025densenet201,kaushik2025densenet201,ozdemir2026enhanced},
+VGG~\cite{mathur2025comparative}, EfficientNet~\cite{chen2023deep},
+Inception~\cite{gamal2025automated,zancan2025ai} -- are used primarily
+for classification, leveraging ImageNet pre-training to compensate for
+limited dental dataset sizes. Second, YOLO-family one-stage object
+detectors (YOLOv5--YOLOv9)
+\cite{ayhan2025detection,nassiri2025yolo,bizjak2024advancing,muresanu2024automating,pornprasertsuk2025clinical}
+dominate detection tasks for their real-time speed and strong bounding
+box localization. Third, U-Net and nested variants
+\cite{alharbi2023detection,asci2024deep,lim2024dual,kong2024integrating,zanini2024systematic}
+are the standard for pixel-level segmentation, using skip connections to
+preserve spatial detail. Fourth, transformer architectures -- ViT
+\cite{bhoopalan2026self}, Swin Transformer
+\cite{vannistelrooij2024combining,zhang2025reliable}, RT-DETR
+\cite{karamuftuo2025panoramic} -- represent the most recent frontier,
+offering global attention at higher computational cost.
+
+\subsection{Evaluation Metrics}
+
+A persistent challenge across the reviewed literature is metric
+inconsistency that prevents direct cross-study comparison
+\cite{iacob2025automated,bonfanti2025deep,khubrani2025detection,zanini2024systematic}.
+Object detection studies report mAP at IoU thresholds of 0.50 and
+0.50:0.95. Segmentation studies report IoU and Dice coefficient.
+Classification studies report accuracy, AUC, sensitivity, specificity,
+and F1. Several studies \cite{chen2023deep,bilal2024pdcnet,zancan2025ai}
+additionally report PPV and NPV -- metrics with direct clinical
+relevance that standard accuracy obscures. The absence of a standardized
+dental AI evaluation protocol is identified as one of the field's most
+critical methodological gaps
+\cite{iacob2025automated,luke2025accuracy,khubrani2025detection}.
+
+% -----------------------------------------------------------------------
+\section{Caries Detection and Severity Classification (C1)}
+\label{sec:caries}
+
+Caries detection is the most extensively studied task in dental AI,
+accounting for 18 of the 47 reviewed papers. Studies span object
+detection, segmentation, classification, and systematic review
+methodologies across panoramic, bitewing, periapical, and intraoral RGB
+modalities.
+
+\subsection{YOLO-Based Detection on Panoramic Radiographs}
+
+Ayhan et al.~\cite{ayhan2025detection} proposed a two-stage pipeline
+targeting caries beneath fixed dental prostheses (FDPs) -- a clinically
+challenging scenario where metal artifacts from crowns and bridges
+actively obscure lesion visibility. YOLOv7 detected FDP regions
+(mAP\,=\,0.968, F1\,=\,0.956) in Stage~1; a CBAM-enhanced YOLOv7
+applied to cropped ROIs achieved caries detection with mAP\,=\,0.846
+and F1\,=\,0.830 in Stage~2. The CBAM attention module demonstrated
+measurable benefit for low-contrast lesion boundaries beneath metallic
+artifacts.
+
+Bizjak and Robic~\cite{bizjak2024advancing} applied a two-step YOLOv8
+pipeline on the public DENTEX dataset, achieving tooth enumeration
+mAP@0.5\,=\,0.95 and lesion sensitivity\,=\,0.70 (internal), 0.67
+(external) -- one of the few studies providing genuine external clinical
+validation, which revealed the performance degradation characteristic of
+single-center training. Asadi~\cite{asadi2024detection} applied Faster
+R-CNN to the UFBA-UESC public dataset, achieving 94\% overall accuracy
+but reporting a critical clinical weakness: recall for mild
+caries\,=\,0.64 versus severe caries\,=\,0.69 -- the opposite of
+clinical need, where early lesions are most important to detect.
+Pornprasertsuk-Damrongsri et al.~\cite{pornprasertsuk2025clinical}
+combined YOLOv5s for tooth detection with Attention U-Net for caries
+segmentation on 500 panoramic radiographs with bitewing-confirmed ground
+truth, achieving Recall\,=\,0.96, F1\,=\,0.85 with Bland-Altman
+agreement analysis.An example of multi-tooth carious lesion detection with severity differentiation in panoramic radiographs is shown in Fig.~\ref{fig:dentex} .
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.65\textwidth]{fig2.jpg}
+    \caption{Example panoramic radiograph with annotated carious lesions, 
+    illustrating multi-instance detection and severity differentiation 
+    (caries vs.\ deep caries) across multiple teeth.}
+    \label{fig:dentex}
+\end{figure*}
+
+\subsection{U-Net Segmentation Approaches}
+
+Alharbi et al.~\cite{alharbi2023detection} compared U-Net, U-Net++, and
+U-Net3+ on 1,500 panoramic images. U-Net3+ achieved the best test
+performance (IoU\,=\,0.67, Dice\,=\,0.60, Accuracy\,=\,0.95), with its
+full-scale skip connections providing measurable advantage over standard
+U-Net (Dice\,=\,0.58). The gap between training IoU (0.77) and test IoU
+(0.67) reveals overfitting from severe class imbalance -- only 510 of
+1,500 images contained visible cavities.
+
+Lim et al.~\cite{lim2024dual} proposed Faster R-CNN + U-Net
+(EfficientNet-B0 encoder) on 597 panoramic radiographs, achieving
+IoU\,=\,0.608, Dice\,=\,0.743, Recall\,=\,0.731 on 33,752 augmented
+cropped tooth images, though without severity grading or explainability.
+Asci et al.~\cite{asci2024deep} applied U-Net to 6,075 pediatric
+panoramic radiographs stratified across primary, mixed, and permanent
+dentition, achieving F1\,=\,0.8675, Sensitivity\,=\,0.8269,
+Precision\,=\,0.9123 -- demonstrating U-Net's adaptability across
+diverse tooth morphologies, though AUC\,=\,0.76 remains below the 90\%
+clinical threshold. Vickram and Mathan Muthu~\cite{vickram2025extraction}
+applied UNet variants on 500 dental X-ray images, achieving
+Accuracy\,=\,98.03\% and Dice\,=\,96.77\%, though on a notably small
+dataset with no clinical validation.
+
+
+\subsection{CNN Classification and Transfer Learning}
+
+Zancan et al.~\cite{zancan2025ai} applied InceptionResNet-v2 to 7,304
+tooth-level images from 935 panoramic radiographs, achieving
+accuracy\,=\,0.94 and F1\,=\,0.94 with five-fold cross-validation --
+one of the stronger validation approaches in C1. Kaushik and
+Sharma~\cite{kaushik2025densenet201} applied DenseNet201 to 29,815
+dental X-ray images, achieving 91\% overall accuracy but a
+cavity-specific F1 of only 0.27 -- a stark illustration of class
+imbalance consequences. Ozdemir et al.~\cite{ozdemir2026enhanced}
+applied DenseNet-121 to 14,498 cropped tooth images (2,303 caries /
+12,195 non-caries), achieving accuracy\,=\,93.17\% and F1\,=\,87.49\%,
+though without localization on full panoramic images. Khuwaja et
+al.~\cite{khuwaja2024ai} evaluated YOLOv8, ResNet-50, EfficientDet, and
+MobileNetV2 on 7,447 intraoral RGB smartphone images -- targeting mobile
+diagnostics for resource-limited settings -- with ResNet-50 achieving
+mAP@0.50\,=\,0.670.
+
+\subsection{Systematic Reviews and Meta-Analyses}
+
+Albano et al.~\cite{albano2024artificial} reviewed 20 studies via
+PRISMA/QUADAS-2, finding accuracy 73\%--98\% and AUC 0.84--0.98 across
+CNN-based models, with high heterogeneity and an explicit call for
+standardized datasets and multicenter validation. Luke and
+Rezallah~\cite{luke2025accuracy} conducted a meta-analysis of 21 studies
+(17,190 total samples), reporting the best individual study achieving
+98.8\% accuracy but $I^2$ values of 88--96\% indicating severe
+heterogeneity that undermines pooled estimates. Zanini et
+al.~\cite{zanini2024systematic} reviewed 42 studies confirming that most
+works are single-task and lack caries severity differentiation as a
+systematic field-wide gap. Sastika and Marappan~\cite{sastika2025ai}
+reviewed accuracy ranges of 85--99\% across multiple architectures,
+notably acknowledging Grad-CAM as a requirement in surveyed studies.
+
+Chen et al.~\cite{chen2024cariesxrays} introduced the CariesXrays
+dataset (6,000 hospital-grade panoramic X-rays, 13,783 expert-verified
+bounding boxes) alongside the FPCL architecture -- achieving
+AP\,=\,48.2\%, AP50\,=\,84.1\%, outperforming YOLOv8
+(AP50\,=\,80.7\%). CariesXrays is the most significant public benchmark
+contribution in the C1 category.
+
+\subsection{Bitewing Caries and Cost-Effectiveness}
+
+Perez de Frutos et al.~\cite{perez2024ai} evaluated RetinaNet,
+YOLOv5-M, and EfficientDet on 13,887 bitewing X-rays from the HUNT4
+Oral Health Study, annotated by six dentists with a 197-image consensus
+test set. YOLOv5-M achieved mAP\,=\,0.647, F1\,=\,0.548 -- matching or
+surpassing individual expert annotators, providing strong evidence that
+deep learning performs at human expert level on proximal caries
+detection. Schwendicke et al.~\cite{schwendicke2021cost} combined U-Net
+performance evaluation (accuracy\,=\,0.80, sensitivity\,=\,0.75 vs.\
+dentist sensitivity\,=\,0.36) with a Markov lifetime cost-effectiveness
+simulation on 3,686 bitewing radiographs, projecting increased tooth
+retention (64 vs.\ 62 years) and reduced cost per tooth
+(\euro298 vs.\ \euro322), yielding ICER\,=\,$-$13.9~\euro/year --
+establishing AI caries detection as a cost-dominant strategy.
+
+\begin{table*}[t]
+\caption{Summary of Reviewed Studies --- Caries Detection and Severity Classification (C1)}
+\label{tab:c1}
+\centering
+\small
+\begin{tabular}{p{0.6cm} p{4.8cm} p{3.0cm} p{3.5cm} p{1.0cm} p{3.2cm}}
+\toprule
+\textbf{Ref} & \textbf{Model} & \textbf{Dataset Size} & \textbf{Best Metric} & \textbf{XAI} & \textbf{Key Gap} \\
+\midrule
+\cite{ayhan2025detection}   & YOLOv7 + CBAM & 1,004 OPG & mAP=0.846, F1=0.830 & None & Single-center, no XAI \\
+\cite{khuwaja2024ai}        & YOLOv8, ResNet-50, EfficientDet, MobileNetV2 & 7,447 RGB & mAP@0.50=0.670 & None & RGB only, no radiographs \\
+\cite{alharbi2023detection} & U-Net, U-Net++, U-Net3+ & 1,500 OPG & IoU=0.67, Dice=0.60 & None & Class imbalance, no severity \\
+\cite{asci2024deep}         & U-Net & 6,075 OPG (pediatric) & F1=0.8675, AUC=0.76 & None & Below 90\% clinical threshold \\
+\cite{albano2024artificial} & Systematic Review (CNNs) & 20 studies & Acc up to 0.98, AUC 0.98 & None & High heterogeneity \\
+\cite{kaushik2025densenet201} & DenseNet201 & 29,815 X-rays & Acc=91\%, Cavity F1=0.27 & None & Severe class imbalance \\
+\cite{chen2024cariesxrays}  & FPCL (Faster R-CNN + D2D-FPN + Contrastive) & 6,000 OPG & AP=48.2\%, AP50=84.1\% & Attn maps & No severity/periodontal \\
+\cite{perez2024ai}          & YOLOv5-M, RetinaNet, EfficientDet & 13,887 bitewing & mAP=0.647, F1=0.548 & None & Bitewing only, no periodontal \\
+\cite{sastika2025ai}        & Review: U-Net, ResNet, YOLOv7/v8, ensemble & Multiple studies & Acc 85--99\%, F1 87--94\% & Discussed & No original experiment \\
+\cite{schwendicke2021cost}  & U-Net & 3,686 bitewing & Acc=0.80, ICER=$-$\euro13.9/yr & None & Single-center, German context \\
+\cite{luke2025accuracy}     & Meta-analysis (CNNs) & 21 studies, 17,190 images & Best Acc=98.8\% & None & $I^2$=88--96\% heterogeneity \\
+\cite{vickram2025extraction}& UNet, UNet+, UNet++ & 500 images & Acc=98.03\%, Dice=96.77\% & None & Small dataset, no clinical val. \\
+\cite{zancan2025ai}         & InceptionResNet-v2 & 935 OPG / 7,304 teeth & Acc=0.94, F1=0.94 & None & No localization, no periodontal \\
+\cite{lim2024dual}          & Faster R-CNN + U-Net (EfficientNet-B0) & 597 OPG & IoU=0.608, Dice=0.743 & None & No severity, no periodontal \\
+\cite{zanini2024systematic} & Systematic Review (U-Net, Mask R-CNN, ResNet) & 42 studies & Various (review) & None & No severity differentiation \\
+\cite{bizjak2024advancing}  & YOLOv8 two-step pipeline & 1,005 OPG + 85 external & mAP@0.5=0.95, Sens=0.70 & None & Caries only, no severity \\
+\cite{asadi2024detection}   & Faster R-CNN & 1,000 OPG & Acc=94\%, Mild recall=0.64 & None & Weak mild caries detection \\
+\cite{pornprasertsuk2025clinical} & YOLOv5s + Attention U-Net & 500 OPG, 14,997 teeth & Recall=0.96, F1=0.85 & None & Single-disease, no periodontal \\
+\cite{ozdemir2026enhanced}  & DenseNet-121 & 14,498 tooth images & Acc=93.17\%, F1=87.49\% & None & No localization, no severity \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% -----------------------------------------------------------------------
+\section{Periodontal Disease and Alveolar Bone Loss Detection (C2)}
+\label{sec:perio}
+
+Periodontal disease detection from radiographs requires quantifying the
+spatial relationship between anatomical landmarks -- specifically the
+distance between the cemento-enamel junction (CEJ) and the alveolar
+bone crest -- across all teeth in the panoramic image. This demands
+precise spatial localization and continuous measurement rather than
+binary classification. Fifteen papers in the C2 category reflect a less
+mature but rapidly advancing field.
+
+\subsection{Clinical Foundation}
+
+Chmielewski et al.~\cite{chmielewski20252018} provide essential clinical
+framing: the 2018 AAP/EFP classification defines periodontitis
+stages~I--IV and grades~A--C based on bone loss percentage, probing
+depth, tooth loss, and risk factors. Across 11 clinical studies covering
+459 cases and 852 examiners, staging accuracy peaked at 90\% but
+inter-examiner agreement remained variable -- the subjectivity problem
+that AI systems can address, but only if they produce quantitative,
+staged outputs aligned with the 2018 criteria rather than binary bone
+loss labels. Fig.~\ref{fig:perio} illustrates the spatial nature of periodontal bone loss assessment, requiring accurate identification of anatomical landmarks such as the cemento-enamel junction and alveolar bone crest.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.65\textwidth]{fig3.jpg}
+    \caption{Example panoramic radiograph illustrating periodontal bone 
+    loss regions. Accurate assessment requires spatial measurement between 
+    the cemento-enamel junction and alveolar bone crest.}
+    \label{fig:perio}
+\end{figure*}
+
+\subsection{Landmark Detection and Bone Loss Quantification}
+
+Jundaeng et al.~\cite{jundaeng2025advanced} presented the most
+technically complete periodontal AI system reviewed. Their dual YOLOv8
+pipeline on 2,000 panoramic radiographs achieved tooth segmentation
+(Accuracy\,=\,0.97, mAP50\,=\,0.92) and CEJ/bone level detection
+(Accuracy\,=\,0.98, Sensitivity\,=\,1.0, Specificity\,=\,0.98,
+F1\,=\,0.90, mAP50\,=\,0.995). Sensitivity\,=\,1.0 for bone level
+detection is clinically important -- missing true bone loss is more
+harmful than a false positive in a screening context. Limitations
+include single-center data, high-quality images only, and no caries
+integration or explainability.
+
+Iacob et al.~\cite{iacob2025automated} synthesized evidence from 20
+diagnostic accuracy studies covering 141,166 radiographs through
+PRISMA/QUADAS-2, finding that U-Net, YOLO, ResNet, ConvNeXt, and
+DeNTNet have all been applied but high heterogeneity prevents reliable
+pooling. Khubrani et al.~\cite{khubrani2025detection} meta-analyzed 30
+studies using APPRAISE-AI, reporting pooled sensitivity\,=\,87\%,
+specificity\,=\,76\%, accuracy\,=\,84\% -- useful but insufficient for
+autonomous clinical use.
+
+Mathur et al.~\cite{mathur2025comparative} applied VGG-16 to 1,874
+panoramic radiographs for binary bone loss classification
+(accuracy\,=\,89.27\%, sensitivity\,=\,83.27\%) -- the most common C2
+approach but also the most clinically limited, providing no staging
+information. Cerda Mardini et al.~\cite{cerda2024determining} attempted
+quantitative staging on 500 panoramic radiographs, reporting
+F1\,=\,0.29 for light-moderate bone loss and F1\,=\,0 for severe bone
+loss -- honestly documenting the difficulty of quantitative staging and
+the model's failure on the most clinically critical class. Kong et
+al.~\cite{kong2024integrating} integrated SRGAN super-resolution
+preprocessing with U-Net for bone loss segmentation
+(Dice\,=\,0.91, IoU\,=\,84.9\%) -- the strongest segmentation metrics
+in C2 -- demonstrating that preprocessing quality directly impacts
+segmentation accuracy, though the dataset of 698 images is small and no
+disease staging is provided.
+
+Wimalasiri et al.~\cite{wimalasiri2025ai} applied YOLOv8x and Keypoint
+R-CNN to 1,000 intraoral periapical X-rays, achieving ICC\,=\,0.80 for
+severity and 87\% for bone loss pattern classification (horizontal
+vs.\ vertical) -- the only study addressing pattern classification,
+which has direct prognostic implications for surgical planning. Tian et
+al.~\cite{tian2025development} developed the PAN-POL mathematical model
+validated on 290 panoramic patients, achieving ICC\,=\,0.83, though
+this is a rule-based approach rather than a deep learning system.
+
+\subsection{Periodontitis Classification}
+
+Bilal et al.~\cite{bilal2024pdcnet} proposed PDCNET -- a custom
+five-block CNN with Grad-CAM explainability -- compared against
+EfficientNet-B0, DenseNet-201, VGG-16, VGG-19, Inception-V3, and
+MobileNet on a Kaggle dataset augmented with SMOTE-Tomek, achieving
+accuracy\,=\,98.39\%, AUC\,=\,99.79\%, F1\,=\,98.31\%. These are the
+highest classification metrics in C2, though the 50+50 original sample
+size raises serious concerns about statistical meaningfulness. The paper
+is valuable for demonstrating Grad-CAM feasibility in periodontal AI.
+Ferrara et al.~\cite{ferrara2025applications} reviewed 13 periodontal
+deep learning studies via PRISMA/QUADAS-2, reporting accuracy ranges of
+73\%--98.6\% and noting the complete absence of explainable AI across
+reviewed systems. Lee et al.~\cite{lee2025evaluation} evaluated AI
+alveolar bone loss measurement usability through a survey of 65 dentists
+on 550 bitewing images -- one of the only clinical usability studies in
+the entire reviewed corpus.
+
+Kim et al.~\cite{kim2024unsupervised} proposed an unsupervised few-shot
+learning architecture combining UNet, CVAE, and clustering methods
+(k-means/DBSCAN/GMM) on 1,372 panoramic radiographs, achieving a 14\%
+improvement over supervised ViT, demonstrating the potential of
+label-efficient learning in data-scarce dental AI settings.
+Karamuftuo\u{g}lu et al.~\cite{karamuftuo2025panoramic} benchmarked
+YOLOv12x, RT-DETR-L, and RT-DETR-X on a 387-image pediatric panoramic
+dataset for furcation lesion detection, achieving mAP@0.5\,=\,0.434 --
+reflecting both the difficulty of the task and the limitation of small
+single-center datasets.
+
+\begin{table*}[t]
+\caption{Summary of Reviewed Studies --- Periodontal Disease and Bone Loss (C2)}
+\label{tab:c2}
+\centering
+\small
+\begin{tabular}{p{0.6cm} p{4.5cm} p{3.0cm} p{3.8cm} p{1.0cm} p{2.8cm}}
+\toprule
+\textbf{Ref} & \textbf{Model} & \textbf{Dataset Size} & \textbf{Best Metric} & \textbf{XAI} & \textbf{Key Gap} \\
+\midrule
+\cite{jundaeng2025advanced}  & Dual YOLOv8 (teeth + CEJ/bone) & 2,000 OPG & mAP50=0.995, Sens=1.0 & None & Single-center, no caries \\
+\cite{chmielewski20252018}   & Clinical review (no ML) & 459 cases, 852 examiners & Stage acc=90\% & None & No AI system proposed \\
+\cite{iacob2025automated}    & Systematic Review (CNN, YOLO, U-Net) & 141,166 radiographs & Various (review) & None & High heterogeneity \\
+\cite{mathur2025comparative} & VGG-16 (transfer learning) & 1,874 OPG & Acc=89.27\% & None & Binary only, no staging \\
+\cite{khubrani2025detection} & Meta-analysis (CNN, YOLO, U-Net, SVM) & 30 studies & Sens=87\%, Spec=76\% & None & Pooled heterogeneity \\
+\cite{tian2025development}   & PAN-POL mathematical model & 290 PAN patients & ICC=0.83 & None & Not deep learning, manual \\
+\cite{lee2025evaluation}     & Faster R-CNN + DeepLab v3+ & 550 bitewing & Acc=82--87\% (severe) & None & Bitewing only, no OPG \\
+\cite{cerda2024determining}  & Hybrid DCNN (Xception) + rule-based PBL & 500 OPG & F1=0.29 (lt-mod), F1=0 (severe) & None & Fails on severe PBL \\
+\cite{wimalasiri2025ai}      & YOLOv8x + Keypoint R-CNN & 1,000 IOPA & ICC=0.80, Pattern Acc=87\% & None & Periapical only, no OPG \\
+\cite{kong2024integrating}   & SRGAN + U-Net & 698 OPG & Dice=0.91, IoU=84.9\% & None & No severity, small dataset \\
+\cite{ferrara2025applications}& Systematic Review (CNNs, hybrid) & 13 studies & Acc 73--98.6\% & None & No XAI in any reviewed study \\
+\cite{bilal2024pdcnet}       & PDCNET (custom CNN) + Grad-CAM & 50+50 orig (SMOTE aug.) & Acc=98.39\%, AUC=99.79\% & Grad-CAM & Dataset too small \\
+\cite{karamuftuo2025panoramic} & YOLOv12x, RT-DETR-L, RT-DETR-X & 387 OPG (pediatric) & mAP@0.5=0.434 & None & Small dataset, modest mAP \\
+\cite{kim2024unsupervised}   & UNet + CVAE + k-means/DBSCAN/GMM & 1,372 OPG & +14\% over supervised ViT & None & No bounding boxes \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% -----------------------------------------------------------------------
+\section{Multi-Task and End-to-End OPG Diagnosis (C3)}
+\label{sec:multitask}
+
+Seven papers address multiple diagnostic tasks within a single pipeline
+applied to panoramic radiographs -- the architectural direction most
+aligned with real clinical utility.
+
+Chen et al.~\cite{chen2023deep} present the most clinically complete
+dual-disease system reviewed, combining YOLOv7 for tooth localization
+with EfficientNet-B0 for simultaneous multi-label classification of both
+periodontitis and dental caries on periapical X-rays, with Grad-CAM
+visualization. EfficientNet-B0 achieved ROC AUC\,=\,98.67\% for
+periodontitis and 98.31\% for dental caries with 10-fold
+cross-validation. The critical limitation is modality: periapical, not
+panoramic.
+
+Nassiri and Akhloufi~\cite{nassiri2025yolo} systematically compared YOLO
+v5--v9 on DENTEX across quadrant segmentation, tooth enumeration, and
+disease detection. YOLOv9e-seg achieved mAP50\,=\,0.978 for tooth
+enumeration and 0.959 for segmentation, but pathology detection peaked
+at mAP50\,=\,0.61 -- confirming that structural tasks are reliably
+solvable while pathology detection remains the harder problem.
+
+Van Nistelrooij et al.~\cite{vannistelrooij2024combining} combined
+OdontoAI and DENTEX datasets with Mask DINO (ViT backbone) and Swin-B
+Transformer, achieving FROC\,=\,0.988 for tooth segmentation and
+AUC\,=\,0.996 for impacted teeth -- the highest-performing tooth-level
+assessment reviewed. The 40-second inference time per image is the
+primary barrier to clinical deployment. Gamal et
+al.~\cite{gamal2025automated} demonstrated that a Weighted Average
+Ensemble of CNN architectures (Custom CNN, ResNet-50, InceptionV3,
+DenseNet121, VGG19) achieves accuracy\,=\,92.93\% on 1,814 cropped
+tooth images, with ESRGAN super-resolution preprocessing contributing
+approximately 3\% accuracy improvement.
+
+Mure\c{s}anu et al.~\cite{muresanu2024automating} provided the most
+methodologically honest external validation in C3: YOLOv8 tested on a
+Romanian clinical dataset showed internal F1\,=\,0.60 degrading to
+external F1\,=\,0.47 -- a 22\% performance drop that directly quantifies
+the generalization gap between controlled training and real multi-center
+clinical data. Bhoopalan et al.~\cite{bhoopalan2026self} applied ViT and
+Swin Transformer to 5,098 OPG images, achieving ViT accuracy\,=\,96\%,
+precision\,=\,95.8\%, recall\,=\,96.2\% -- strong results for
+image-level classification, though without localization or segmentation.
+Zhou et al.~\cite{zhou2025deep} provided a comprehensive systematic
+review of datasets, methodologies, and emerging challenges in dental
+image analysis, reinforcing the field's critical need for standardization.
+
+%----------------------------------------------------------
+\section{Explainable AI in Dental Diagnostics (C4)}
+\label{sec:xai}
+
+Of the 47 papers reviewed, only three report any form of explainability
+output: Chen et al.~\cite{chen2023deep} use Grad-CAM for dual-disease
+classification on periapical X-rays; Bilal et al.~\cite{bilal2024pdcnet}
+apply Grad-CAM to periodontal disease classification; and Chen et
+al.~\cite{chen2024cariesxrays} show attention visualization in feature
+maps for caries detection. This constitutes \textbf{6.4\%} of the
+reviewed corpus -- directly quantifying the explainability gap in dental
+AI.
+
+Gradient-weighted Class Activation Mapping (Grad-CAM) generates a
+coarse localization map highlighting image regions most influential for a
+CNN prediction. In the dental diagnostic context, Grad-CAM serves three
+clinical functions: (i)~it allows clinicians to verify that the model
+attends to anatomically plausible regions; (ii)~it provides a visual
+teaching tool for junior clinicians learning radiographic interpretation;
+and (iii)~it creates an audit trail relevant to the EU AI Act and FDA
+guidance on AI/ML-based medical devices -- both of which classify AI
+diagnostic tools as high-risk systems requiring transparency and human
+oversight \cite{chen2023deep}.
+
+Despite a clear consensus across the literature that explainability is
+required for clinical adoption
+\cite{nassiri2025yolo,gamal2025automated,sastika2025ai,ferrara2025applications},
+the implementation rate remains at 6.4\%. This gap is particularly acute
+for systems targeting junior clinicians and dental students, who require
+not just a prediction but a visual justification that teaches them to
+recognize the radiographic pattern and builds diagnostic confidence. The
+complete absence of SHAP, LIME, or transformer attention visualization in
+any reviewed dental AI study represents an untapped methodological
+opportunity -- transformer attention maps are intrinsic to the
+architecture and require no additional computation
+\cite{bhoopalan2026self}.
+
+
+%------------------------------------------------------------------
+
+\section{Comparative Analysis of Representative Methods}
+\label{sec:comparison}
+
+\begin{table*}[t]
+\renewcommand{\arraystretch}{1.4}
+\caption{Comparison of Representative Deep Learning Methods for Dental
+Radiograph Analysis. Performance metrics are reported as provided in
+the respective studies and are not directly comparable due to variations
+in tasks, datasets, and evaluation protocols.}
+\label{tab:comparison}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{p{0.5cm} p{2.0cm} p{1.3cm} p{2.2cm} p{1.1cm} p{2.4cm} p{1.6cm} p{0.6cm} p{1.3cm} p{2.2cm}}
+\toprule
+\textbf{Ref} & \textbf{Task} & \textbf{Scope} &
+\textbf{Dataset (Size)} & \textbf{Modality} & \textbf{Model} &
+\textbf{Best Metric} & \textbf{XAI} &
+\textbf{Clinical Val.} & \textbf{Key Limitation} \\
+\midrule
+\cite{ayhan2025detection}        & Caries Detection             & Single-task & Private OPG (1,004)             & OPG      & YOLOv7 + CBAM           & mAP=0.846        & No      & Internal & No external validation \\
+\cite{jundaeng2025advanced}      & Bone Loss + Periodontal      & Multi-task  & Private OPG (2,000)             & OPG      & YOLOv8                  & mAP50=0.995      & No      & Internal & Single-center dataset \\
+\cite{chen2023deep}              & Multi-disease Detection      & Multi-task  & Periapical (11k)                & X-ray    & YOLOv7 + EfficientNet   & AUC$\approx$98\% & Yes     & Internal & Not panoramic \\
+\cite{alharbi2023detection}      & Caries Segmentation          & Single-task & DNS (1,500)                     & OPG      & U-Net3+                 & Dice=0.60        & No      & Internal & Small dataset \\
+\cite{asci2024deep}              & Caries Segmentation          & Single-task & Pediatric OPG (6,075)           & OPG      & U-Net                   & F1=0.867         & No      & Internal & No severity staging \\
+\cite{gamal2025automated}        & Multi-disease Classification & Multi-task  & Roboflow (1,075)                & OPG      & CNN Ensemble            & Acc=92.9\%       & No      & Internal & No explainability \\
+\cite{chen2024cariesxrays}       & Caries Detection             & Single-task & CariesXrays (6,000)             & OPG      & Faster R-CNN            & AP50=84.1\%      & Partial & Internal & Single-disease \\
+\cite{perez2024ai}               & Caries Detection             & Single-task & HUNT4 (13k)                     & Bitewing & YOLOv5                  & mAP=0.647        & No      & External & Not panoramic \\
+\cite{nassiri2025yolo}           & Multi-task OPG Analysis      & Multi-task  & DENTEX ($\sim$1,000)            & OPG      & YOLOv9-seg              & mAP=0.978        & No      & Internal & Limited pathology \\
+\cite{vannistelrooij2024combining}& Tooth + Diagnosis            & Multi-task  & OdontoAI (1,661) + DENTEX (682) & OPG      & Mask DINO + Swin        & mAP=0.848        & No      & Internal & Slow pipeline \\
+\cite{zancan2025ai}              & Tooth + Caries               & Multi-task  & 935 PAN + 18k teeth             & OPG      & InceptionResNet         & Acc=0.998        & No      & Internal & No localization \\
+\cite{lim2024dual}               & Caries Segmentation          & Single-task & 597 PAN                         & OPG      & Faster R-CNN + U-Net    & Dice=0.743       & No      & Internal & Single-disease \\
+\cite{bizjak2024advancing}       & Caries Detection             & Single-task & DENTEX + external               & OPG      & YOLOv8                  & mAP=0.95         & No      & External & No segmentation \\
+\cite{asadi2024detection}        & Caries Severity              & Single-task & 1,000 PAN                       & OPG      & Faster R-CNN            & Acc=94\%         & No      & Internal & Weak mild detection \\
+\cite{pornprasertsuk2025clinical}& Caries Detection             & Multi-stage & 500 PAN                         & OPG      & YOLOv5 + U-Net          & Recall=0.96      & No      & Internal & Single-disease \\
+\cite{mathur2025comparative}     & Bone Loss Classification     & Single-task & 1,874 OPG                       & OPG      & VGG-16                  & Acc=89.27\%      & No      & Internal & No localization \\
+\cite{lee2025evaluation}         & Bone Loss Detection          & Single-task & Bitewing (550)                  & Bitewing & Faster R-CNN + DeepLab  & Acc$\approx$85\% & No      & Internal & Limited modality \\
+\cite{wimalasiri2025ai}          & Bone Loss Severity           & Single-task & DenPAR (1,000)                  & IOPA     & YOLOv8 + KRCNN          & ICC=0.80         & No      & Internal & Not panoramic \\
+\cite{kong2024integrating}       & Bone Loss Segmentation       & Single-task & CBNUH (100) + Kaggle ($\sim$600)& OPG      & SRGAN + U-Net           & Dice=0.91        & No      & Internal & No detection \\
+\cite{muresanu2024automating}    & Multi-disease Detection      & Single-task & Multi-center panoramic          & OPG      & YOLOv8                  & F1=0.60→0.47     & No      & External & Poor generalization \\
+\cite{zhang2025reliable}         & Tooth Segmentation           & Multi-stage & Tufts + O2PR                    & OPG      & Mask R-CNN + YOLO       & mAP=77.4         & No      & Internal & No disease labels \\
+\cite{bonfanti2025deep}          & Tooth Segmentation Review    & Review      & 20 studies                      & Multi    & CNNs                    & Sens=0.92        & No      & Review   & High heterogeneity \\
+\cite{khubrani2025detection}     & Bone Loss Review             & Review      & 30 studies                      & Multi    & CNNs                    & Acc=84\%         & No      & Review   & No standardization \\
+\cite{zhou2025deep}              & Deep Learning Survey         & Review      & 260 studies                     & Multi    & Various                 & ---              & No      & Review   & No unified system \\
+\cite{bilal2024pdcnet}           & Periodontal Classification   & Single-task & Kaggle ($\sim$1,000)            & X-ray    & PDCNET                  & Acc=98.39\%      & Yes     & Internal & No localization \\
+\end{tabular}
+\end{table*}
+% -----------------------------------------------------------------------
+\section{Datasets, Benchmarks, and Clinical Validation (C5)}
+\label{sec:datasets}
+
+Dataset availability and quality represent the single most frequently
+cited limitation across all 47 reviewed papers. The key public
+benchmarks in the field are as follows:
+
+\begin{itemize}
+  \item \textbf{DENTEX}: 1,005 panoramic radiographs with quadrant,
+        tooth, and pathology annotations from three institutions
+        \cite{nassiri2025yolo,vannistelrooij2024combining,bizjak2024advancing}.
+  \item \textbf{CariesXrays}: 6,000 hospital-grade panoramic images
+        with 13,783 caries bounding boxes \cite{chen2024cariesxrays}.
+  \item \textbf{Tufts Dental Database}: Approximately 1,000 panoramic
+        radiographs with tooth segmentation masks
+        \cite{cerda2024determining,kim2024unsupervised,zhang2025reliable,yaswanth2025automated}.
+  \item \textbf{HUNT4 Oral Health Study}: 13,887 bitewing X-rays with
+        six-dentist annotations and a 197-image consensus set
+        \cite{perez2024ai}.
+  \item \textbf{UFBA-UESC}: 4,000 panoramic images
+        \cite{asadi2024detection}.
+\end{itemize}
+
+Despite these contributions, approximately 60\% of reviewed primary
+studies rely exclusively on private, single-center institutional
+datasets. Systematic reviews
+\cite{iacob2025automated,albano2024artificial,luke2025accuracy,bonfanti2025deep,khubrani2025detection}
+consistently report $I^2$ heterogeneity values of 88--96\% as the
+primary barrier to reliable evidence synthesis. The performance
+degradation from internal to external validation quantified by
+Mure\c{s}anu et al.~\cite{muresanu2024automating} -- F1 dropping from
+0.60 to 0.47 -- directly measures the real cost of single-center
+training.
+
+Waqas et al.~\cite{waqas2025synthetic} addressed data scarcity through
+GAN-based synthetic OPG generation (DCGAN, WGAN) on 4,777 real images,
+producing synthetic panoramic radiographs with expert realism assessed
+above 50\% relative to real images -- a promising augmentation approach,
+though downstream disease detection improvement was not demonstrated.
+Ameli et al.~\cite{ameli2025automated} applied YOLOv8 to 1,000 OPGs for
+automated quality assessment (contrast/density accuracy\,=\,97.9\%,
+artifact accuracy\,=\,87.2\%, overall quality\,=\,79.3\%) --
+establishing automated quality filtering as a viable preprocessing gate
+for diagnostic AI pipelines. Delamare et al.~\cite{delamare2024panoramic}
+documented heterogeneous quality criteria across 41 panoramic ML
+studies, calling for standardized quality protocols as a prerequisite for
+reproducible AI development.
+
+% -----------------------------------------------------------------------
+\section{Tooth Segmentation and Numbering (C6)}
+\label{sec:segmentation}
+
+Four papers address tooth detection, segmentation, and numbering --
+enabling upstream tasks that are prerequisites for tooth-specific disease
+attribution. Accurate FDI-standard tooth numbering is required to report
+that caries is in tooth~26 rather than merely somewhere in the panoramic
+image.
+
+Bonfanti-Gris et al.~\cite{bonfanti2025deep} synthesized 20 tooth
+detection and segmentation studies in a PRISMA/QUADAS-2 meta-analysis,
+reporting pooled sensitivity\,=\,0.92 and specificity\,=\,0.94 with
+DOR\,=\,186 -- strong aggregate evidence, though $I^2 \approx 96\%$
+confirms severe heterogeneity. Zhang et al.~\cite{zhang2025reliable}
+proposed a multi-stage system (MobileNetV3 + SADP-Net Mask R-CNN + Swin
+Transformer + YOLOv5) across three public datasets, achieving
+AP50\,=\,97.3\% on Tufts and 98.1\% on O2PR for tooth instance
+segmentation. Yaswanth et al.~\cite{yaswanth2025automated} applied
+Attention-integrated U-Net++ to the Tufts dataset, achieving
+mAP\,=\,96.4\% and Dice\,=\,90\%. Adnan and
+Umer~\cite{adnan2024orthopantomogram} contributed the Orthopantomogram
+Teeth Segmentation and Numbering Dataset -- 250 expert-annotated OPGs on
+Zenodo -- explicitly noting the absence of disease annotations and
+calling for expansion to caries and periodontal labeling.
+
+\section{Cross-Study Trends and Observations}
+
+This section presents a synthesized analysis of recurring patterns identified across the 47 reviewed studies. Based on the global comparison in Table~\ref{tab:comparison}, key trends emerge across model design, dataset characteristics, task complexity, and deployment challenges that collectively define the current landscape of dental AI.
+
+\subsection{Model Architecture Trends}
+
+\subsubsection{Transformer-Based vs. CNN-Based Architectures}
+
+Transformer-based architectures, such as Vision Transformer (ViT) and Swin Transformer, demonstrate strong capability in capturing global contextual information, particularly for classification and multi-label diagnosis tasks~\cite{vannistelrooij2024combining}. However, as observed in Table~\ref{tab:comparison}, CNN-based architectures dominate the majority of studies, especially in detection and pipeline-based systems~\cite{kaushik2025densenet201}. This dominance is primarily due to their efficiency, lower computational requirements, and robustness on moderately sized dental datasets.
+
+Transformer-based models typically require large annotated datasets and exhibit higher inference latency, limiting their practicality in clinical environments~\cite{vannistelrooij2024combining}. Consequently, despite their representational power, CNN-based approaches remain more suitable for real-world deployment under current dataset constraints.
+
+\subsubsection{Dominance of YOLO in Detection Tasks}
+
+A clear trend across the reviewed literature is the widespread adoption of YOLO-based architectures for detection-related tasks. As reflected in Table~\ref{tab:comparison}, YOLO variants are the most frequently used models for caries localization, tooth detection, and bone loss identification~\cite{nassiri2025yolo}. Their dominance stems from the ability to achieve high detection accuracy in a single inference pass while maintaining near real-time performance, making them particularly suitable for clinical applications.
+
+\subsubsection{Ensemble Methods}
+
+Ensemble methods improve classification robustness by combining multiple models; however, they introduce increased computational complexity and reduced inference efficiency, limiting their applicability in real-time clinical settings~\cite{gamal2025automated}.
+
+\subsection{Data and Generalization}
+
+Dataset size positively influences model performance, but it is not sufficient to ensure generalization. Large datasets may still suffer from issues such as class imbalance, leading to poor task-specific performance~\cite{kaushik2025densenet201}. More importantly, models trained on single-center datasets consistently exhibit reduced performance when evaluated on external data.
+
+This generalization gap is a structural limitation across the field. For example, models trained on single-center panoramic datasets demonstrate significant performance degradation under multi-center conditions~\cite{muresanu2024automating}. Systematic reviews further confirm high heterogeneity across studies due to differences in imaging protocols, annotation standards, and model architectures~\cite{khubrani2025detection}. These findings indicate that dataset diversity, multi-center representation, and standardized evaluation protocols are essential for developing clinically reliable systems.
+
+\subsection{Task Complexity and Learning Paradigm}
+
+\subsubsection{Structural Tasks vs. Disease Detection}
+
+The reviewed studies reveal a fundamental asymmetry in task difficulty. Structural tasks, such as tooth segmentation and enumeration, are relatively low-variance problems and achieve consistently high performance across architectures~\cite{bonfanti2025deep}. In contrast, disease detection—particularly early-stage caries—remains significantly more challenging due to subtle and high-variance visual features.
+
+This disparity indicates that anatomical recognition and pathological detection impose fundamentally different requirements on model design and data quality. Even high-performing systems demonstrate reduced accuracy when transitioning from structural tasks to disease detection within the same framework~\cite{nassiri2025yolo}.
+
+\subsubsection{Multi-Task Learning vs. Single-Task Models}
+
+As shown in Table~\ref{tab:comparison}, the majority of studies adopt single-task formulations, with only a limited number exploring multi-task learning approaches. This represents a critical limitation, as real-world dental diagnosis requires simultaneous evaluation of multiple conditions.
+
+Although a few studies attempt multi-task learning by combining diagnostic objectives within a single framework~\cite{chen2023deep}, such approaches remain rare and are often limited in scope or modality. The lack of integrated multi-task systems highlights a significant gap between current research and clinically deployable solutions.
+
+\subsection{Deployment and Evaluation Challenges}
+
+\subsubsection{Explainable AI}
+
+Explainability is incorporated in only a small fraction of the reviewed studies (approximately 6.4\%), with most systems remaining black-box models~\cite{chen2023deep}. This lack of interpretability reduces clinical trust and poses challenges for regulatory approval, where transparency and human oversight are required. Consequently, explainable AI is not merely an enhancement but a necessary component for clinical deployment.
+
+\subsubsection{Lack of Standardized Evaluation Metrics}
+
+A major limitation across the reviewed literature is the lack of standardized evaluation metrics. Studies report heterogeneous measures, including mAP, Dice, IoU, accuracy, and F1-score, making direct comparison difficult. As reflected in Table~\ref{tab:comparison}, this inconsistency complicates benchmarking across models and tasks.
+
+Systematic reviews confirm that metric variability contributes significantly to inter-study heterogeneity and limits reliable evidence synthesis~\cite{bonfanti2025deep}. The development of standardized evaluation protocols is therefore essential for advancing the field.
+
+\subsection{Final Observation}
+
+Overall, CNN-based and YOLO-driven approaches dominate current dental AI systems, while transformer-based models are emerging as a promising but resource-intensive alternative. Structural tasks achieve high reliability, whereas disease detection—particularly early-stage and quantitative assessment—remains significantly more challenging. These trends highlight a critical disconnect between current research, which focuses on isolated high-performance tasks, and the requirements of clinically deployable systems that demand integrated, explainable, and generalizable solutions across the full diagnostic pipeline.
+
+% -----------------------------------------------------------------------
+\section{Critical Analysis of Existing Methods}
+\label{sec:critical}
+
+\subsection{Metrics and Evaluation Limitations}
+
+A major limitation across the reviewed literature is the lack of
+standardized evaluation practices. Studies report a wide range of
+metrics -- including mAP, Dice coefficient, accuracy, AUC, and
+F1-score -- often with inconsistent thresholds and experimental setups.
+This heterogeneity makes direct comparison across methods difficult and
+obscures the identification of genuinely superior approaches
+\cite{iacob2025automated,bonfanti2025deep,khubrani2025detection}.
+
+Furthermore, many studies report high performance under controlled
+experimental conditions without standardized benchmarking protocols.
+Only a limited subset of works adopt consistent evaluation settings or
+cross-study comparable methodologies.
+
+Consequently, the absence of unified benchmarks and evaluation standards
+fundamentally limits the reproducibility, comparability, and reliability
+of existing approaches.
+
+\subsection{Dataset Bias and Generalization Issues}
+
+A critical issue in current research is the heavy reliance on
+single-center datasets. A significant proportion of the reviewed studies
+utilize data collected from a single institution or imaging setup, which
+fails to capture variability across populations, imaging devices, and
+acquisition conditions \cite{albano2024artificial,luke2025accuracy}.
+
+This limitation leads to substantial generalization gaps. Models trained
+on such datasets often demonstrate strong internal performance but
+degrade significantly when evaluated on external data, as reflected in
+multiple studies reporting notable performance drops under cross-dataset
+validation \cite{muresanu2024automating}.
+
+In addition, publicly available datasets remain limited in both scale
+and diversity. Existing benchmarks such as DENTEX and CariesXrays
+provide useful baselines but do not fully represent multi-disease,
+multi-center clinical variability \cite{nassiri2025yolo,chen2024cariesxrays}.
+
+Overall, the lack of diverse, standardized, multi-institutional datasets
+and consistent validation protocols fundamentally constrains the
+generalizability of current systems, thereby limiting their reliability
+in real-world clinical deployment.
+
+\subsection{Clinical Integration Gap}
+
+Despite strong performance in controlled settings, most systems remain
+confined to offline evaluation and focus on producing intermediate
+outputs -- such as bounding boxes, segmentation masks, or classification
+labels -- without integration into real-time clinical decision support.
+
+Moreover, clinician involvement in model development and evaluation is
+limited, and only a small number of studies assess real-world impact in
+terms of diagnostic accuracy, treatment planning, or workflow efficiency
+\cite{schwendicke2021cost,lee2025evaluation}.
+
+Additionally, the limited incorporation of explainable AI further
+restricts clinical trust, as most systems operate as black-box models
+without interpretable outputs. This results in a clear disconnect
+between technical performance and clinical applicability, indicating
+that current systems are not yet aligned with real-world diagnostic
+requirements.
+
+\subsection{Fragmentation of Existing Approaches}
+
+Another fundamental limitation is the fragmented nature of existing
+methods. As evidenced in Table~\ref{tab:taxonomy}, the majority of
+reviewed studies focus on isolated tasks such as detection, segmentation,
+or classification, with only a small fraction exploring integrated
+multi-task frameworks.
+
+However, real-world dental diagnosis requires simultaneous evaluation of
+multiple conditions, including caries detection, periodontal assessment,
+severity staging, and quantitative measurement. The absence of systems
+that jointly address these components prevents current approaches from
+reflecting the complexity of clinical workflows.
+
+To the best of our knowledge, no reviewed system operating on panoramic
+radiographs simultaneously integrates detection, localization, severity
+staging, quantification, and explainability within a unified framework.
+This fragmentation represents a structural limitation of the field
+rather than a limitation of individual model performance alone.
+
+Addressing this limitation requires a shift from task-specific
+optimization toward system-level design, where multiple diagnostic
+components are jointly modeled and aligned with clinical requirements.
+
+\vspace{4pt}
+\noindent\textit{These limitations collectively highlight the need for
+unified, clinically aligned, and generalizable dental AI systems, which
+are discussed in the following section.}
+
+% -----------------------------------------------------------------------
+\section{Cross-Cutting Gap Analysis}
+\label{sec:gaps}
+
+Synthesizing findings across all 47 reviewed papers, five critical
+interconnected gaps emerge that consistently limit clinical translational
+potential.
+
+\subsection{Gap 1: Single-Disease Focus}
+
+The dominant pattern across all categories is single-disease training.
+Of 47~papers reviewed, only Chen et al.~\cite{chen2023deep}
+simultaneously detect both caries and periodontal disease -- exclusively
+on periapical, not panoramic, radiographs. On panoramic radiographs
+specifically, no reviewed study provides simultaneous caries detection,
+severity staging, and periodontal bone loss quantification within a
+single pipeline. This is the primary architectural gap relative to
+clinical reality, where patients routinely present with co-occurring
+conditions requiring simultaneous assessment from one exposure.
+
+\subsection{Gap 2: Absence of Automated Severity Staging}
+
+Of 18 C1~papers, only Asadi~\cite{asadi2024detection} and Bizjak and
+Robic~\cite{bizjak2024advancing} address any severity distinction beyond
+binary caries presence. In C2, only Wimalasiri et
+al.~\cite{wimalasiri2025ai} address bone loss severity patterns. The
+2018 AAP/EFP classification~\cite{chmielewski20252018} defines four
+periodontitis stages, none addressed by any panoramic OPG system
+reviewed. Severity staging is not optional -- it determines treatment
+planning, referral, and prognosis. A system that detects caries without
+staging it provides limited clinical decision support value.
+
+\subsection{Gap 3: Explainability at 6.4\%}
+
+Only 3 of 47~papers implement any XAI output. The consensus that
+explainability is necessary for clinical adoption
+\cite{nassiri2025yolo,gamal2025automated,sastika2025ai,ferrara2025applications}
+is not reflected in implementation rates. Regulatory frameworks including
+the EU AI Act classify AI diagnostic tools as high-risk systems requiring
+transparency and human oversight -- requirements that current black-box
+dental AI systems cannot satisfy. For junior clinicians specifically,
+explainability is not optional; it is the mechanism through which
+AI-assisted diagnosis becomes educational rather than merely predictive.
+
+\subsection{Gap 4: Dataset Fragmentation}
+
+Approximately 60\% of reviewed primary studies use private,
+single-center datasets. Systematic reviews
+\cite{iacob2025automated,albano2024artificial,luke2025accuracy,bonfanti2025deep,khubrani2025detection}
+consistently report $I^2\,=\,88$--$96\%$ heterogeneity as the primary
+barrier to evidence synthesis. The quantified real cost is documented by
+Mure\c{s}anu et al.~\cite{muresanu2024automating}: F1 drops 22\% from
+internal to external validation. The field requires a single
+large-scale, multi-disease, multi-center, publicly available panoramic
+OPG dataset with standardized caries and periodontal annotations --
+nothing in the reviewed literature currently provides this.
+
+\subsection{Gap 5: Clinical Workflow Integration}
+
+With the exception of Schwendicke et al.~\cite{schwendicke2021cost} and
+Lee et al.~\cite{lee2025evaluation}, no reviewed study evaluates AI
+within an actual clinical workflow or measures clinician acceptance and
+diagnostic impact. The majority of systems produce bounding boxes or
+segmentation masks without clinical report generation, severity
+summaries, or treatment recommendations. The economic evidence from
+Schwendicke et al.~\cite{schwendicke2021cost} demonstrating
+ICER\,=\,$-$13.9~\euro/year for AI-assisted caries detection represents
+an isolated example of the real-world impact analysis the field urgently
+needs.
+
+% -----------------------------------------------------------------------
+\section{Research Roadmap Toward Unified and Clinically Deployable
+Dental AI Systems}
+\label{sec:roadmap}
+
+Building on the limitations identified in Section~\ref{sec:critical},
+this section outlines a structured roadmap toward the development of
+unified, clinically deployable dental AI systems.
+
+\subsection{Short-Term Goals (1--2 Years)}
+
+\textbf{Public Multi-Disease Panoramic Dataset:} The most immediate
+bottleneck is the absence of a large-scale, standardized panoramic
+dataset with multi-disease annotations. A consortium-driven effort is
+required to develop a dataset containing at least 5,000 panoramic
+radiographs with consistent annotations for caries (per-tooth with
+severity), periodontal bone loss (CEJ--bone crest distance), and tooth
+numbering (FDI standard).
+
+Existing datasets such as CariesXrays \cite{chen2024cariesxrays} and
+DENTEX \cite{nassiri2025yolo} provide partial solutions; however, they
+lack comprehensive multi-disease annotations. Extending and integrating
+these datasets represents a practical short-term direction.
+
+\textbf{Explainability as a Standard Component:} Explainability must be
+incorporated as a standard component using techniques such as Grad-CAM
+or attention visualization, with validation against expert annotations
+to ensure anatomical relevance
+\cite{kaushik2025densenet201,bilal2024pdcnet}.
+
+\subsection{Mid-Term Goals (3--5 Years)}
+
+\textbf{Unified Multi-Disease System for Panoramic Radiographs:} The
+most critical research direction is the development of a unified
+multi-disease system capable of simultaneously detecting caries,
+performing severity staging, quantifying periodontal bone loss, and
+supporting comprehensive multi-condition diagnosis from a single
+panoramic radiograph.
+
+This requires multi-head architectures with shared feature
+representations and task-specific outputs. While individual components
+exist in the literature, their integration into a single coherent
+framework remains an open challenge
+\cite{nassiri2025yolo,chen2023deep,jundaeng2025advanced,
+muresanu2024automating}.
+
+\textbf{Clinical Alignment with Standardized Diagnostic Frameworks:}
+Future systems must generate outputs aligned with established clinical
+classification standards, such as ICCMS for caries and the 2018 AAP/EFP
+classification for periodontal disease \cite{chmielewski20252018}. Such
+alignment transforms model outputs into clinically interpretable
+results, thereby bridging the gap between algorithmic predictions and
+clinically actionable decisions.
+
+\subsection{Long-Term Goals (Clinical Deployment)}
+
+\textbf{Prospective Clinical Validation and Deployment:} Future
+research must move beyond retrospective evaluation toward prospective
+clinical validation. This includes randomized studies assessing
+diagnostic accuracy, clinician efficiency, and patient outcomes with
+and without AI assistance. Such studies should follow standardized
+reporting protocols to ensure reproducibility and comparability across
+clinical settings.
+
+The cost-effectiveness framework proposed by Schwendicke et al.\
+\cite{schwendicke2021cost} provides a foundation for evaluating
+clinical impact and should be extended to multi-disease systems and
+panoramic radiographs. Such validation is essential not only for
+regulatory approval but also for establishing trust among clinicians
+and enabling widespread adoption.
+
+\vspace{4pt}
+\noindent\textit{\textbf{Final Perspective:} Collectively, this roadmap
+outlines a progression from data standardization and model
+explainability toward fully integrated, clinically validated systems,
+providing a clear and actionable pathway for the next generation of
+dental AI research.}
+% -----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+This survey reviewed 47 deep learning studies (2021--2026) on dental
+caries detection, periodontal bone loss assessment, and related tasks
+from panoramic and bitewing dental radiographs. The literature
+demonstrates that deep learning has achieved clinically competitive
+performance on individual sub-tasks: caries detection reaches 96\%
+recall with Attention U-Net \cite{pornprasertsuk2025clinical};
+periodontal landmark detection achieves mAP50\,=\,0.995 with YOLOv8
+\cite{jundaeng2025advanced}; dual-disease classification attains
+AUC\,$>$\,98\% on periapical X-rays with EfficientNet-B0 and Grad-CAM
+\cite{chen2023deep}; and AI-assisted caries detection is economically
+superior to unaided clinical assessment with
+ICER\,=\,$-$13.9~\euro/year \cite{schwendicke2021cost}.
+
+However, five structural gaps persist across the entire reviewed corpus:
+single-disease models that ignore clinical co-occurrence; near-absence of
+automated severity staging despite its treatment planning centrality; a
+6.4\% explainability implementation rate despite universal consensus on
+its necessity; dataset fragmentation from private single-center
+collections; and minimal clinical workflow integration beyond isolated
+studies.
+
+No existing system simultaneously addresses caries detection, severity
+staging, periodontal bone loss quantification, and explainability on
+panoramic radiographs within a single unified pipeline. This is the
+definitive unmet need that the reviewed literature collectively
+establishes. The technical components exist -- YOLO detection, U-Net
+segmentation, Grad-CAM explainability, EfficientNet classification, and
+transformer-based global attention have all been individually
+demonstrated on dental radiographic data. The challenge is integration,
+clinical validation, and standardization toward systems that are not
+merely accurate but clinically trustworthy, interpretable, and
+actionable -- particularly for the junior clinicians and dental students
+who stand to benefit most from AI-assisted diagnostic support.
+
+% -----------------------------------------------------------------------
+\section*{Acknowledgment}
+The authors thank Dr.\ Mamatha H R, Director, Bajaj Engineering Skills
+Training@PESU, PES University -- RR Campus, Bangalore, for her guidance
+and supervision throughout this work.
+
+% -----------------------------------------------------------------------
+\bibliographystyle{IEEEtran}
+\bibliography{source}
+
+\end{document}
